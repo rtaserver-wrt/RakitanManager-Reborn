@@ -419,7 +419,11 @@ uninstall_rakitanmanager() {
     [ "$confirmation" != "YES" ] && { echo "${GREEN}Uninstall cancelled.${NC}"; exit 0; }
 
     backup_existing
-    [ -f /etc/init.d/rakitanmanager ] && /etc/init.d/rakitanmanager stop 2>/dev/null && /etc/init.d/rakitanmanager disable 2>/dev/null
+    if [ -f "/etc/init.d/rakitanmanager" ]; then
+        /etc/init.d/rakitanmanager stop 2>/dev/null
+        /etc/init.d/rakitanmanager disable 2>/dev/null
+    fi
+    
     rm -rf /usr/share/rakitanmanager /www/rakitanmanager
     rm -f $CONFIG_FILE /etc/init.d/rakitanmanager
     rm -f /usr/lib/lua/luci/view/rakitanmanager.htm /usr/lib/lua/luci/controller/rakitanmanager.lua

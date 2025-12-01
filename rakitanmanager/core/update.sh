@@ -24,6 +24,8 @@ PACKAGE_PYTHON="python3-requests python3-pip python3-setuptools"
 # Progress Tracking Functions
 # ============================================
 
+/etc/init.d/rakitanmanager stop 2>/dev/null
+
 init_progress() {
     cat > "$PROGRESS_FILE" << EOF
 {
@@ -261,7 +263,6 @@ start_service() {
     
     if [ -f "/etc/init.d/rakitanmanager" ]; then
         /etc/init.d/rakitanmanager enable 2>/dev/null
-        /etc/init.d/rakitanmanager start 2>/dev/null
         log_message "Service enabled and started"
     fi
 }
