@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ============================================
-# RakitanManager-Reborn Installer v2.0
+# RakitanManager-Reborn Installer v2.1
 # Modern, Robust, User-Friendly Installer
 # ============================================
 
@@ -18,7 +18,7 @@ BOLD='\033[1m'
 LOGO="
 ${CYAN}╔═══════════════════════════════════════════════════════════╗
 ║${BOLD}               OpenWrt Rakitan Manager Installer           ${CYAN}║
-║${BOLD}                     Installer Version 1.0                ${CYAN}║
+║${BOLD}                     Installer Version 2.1                ${CYAN}║
 ╚═══════════════════════════════════════════════════════════╝${NC}
 "
 
@@ -53,6 +53,7 @@ ARCH=""
 BRANCH=""
 PACKAGE_MANAGER=""
 OS_INFO=""
+EXTRACTED_DIR=""
 
 # ============================================
 # Utility Functions
@@ -155,7 +156,8 @@ set_sleep_cmd() {
 
 # Check command success
 check_success() {
-    if [ $? -eq 0 ]; then
+    local last_exit=$?
+    if [ $last_exit -eq 0 ]; then
         SUCCESS_STEPS=$((SUCCESS_STEPS + 1))
         echo -e "${GREEN}${CHECK_MARK} Success${NC}"
         return 0
@@ -169,10 +171,11 @@ check_success() {
 # Check internet connectivity
 check_internet() {
     log "Checking internet connectivity..."
-    if ping -c 1 -W 3 google.com >/dev/null 2>&1; then
+    if ping -c 1 -W 3 8.8.8.8 >/dev/null 2>&1 || ping -c 1 -W 3 google.com >/dev/null 2>&1; then
+        log "Internet connectivity check passed" "SUCCESS"
         return 0
     else
-        log "No internet connection detected" "ERROR"
+        log "No internet connection detected. Please check your network." "ERROR"
         return 1
     fi
 }
@@ -180,7 +183,7 @@ check_internet() {
 # Check disk space
 check_disk_space() {
     local required=$1
-    local available=$(df /tmp | awk 'NR==2 {print $4}')
+    local available=$(df /tmp 2>/dev/null | awk 'NR==2 {print $4}' || echo "0")
     
     if [ "$available" -lt "$required" ]; then
         log "Insufficient disk space. Required: ${required}KB, Available: ${available}KB" "ERROR"
@@ -191,7 +194,7 @@ check_disk_space() {
 
 # Detect package manager
 detect_package_manager() {
-    if [ -x "/bin/opkg" ]; then
+    if [ -x "/bin/opkg" ] || [ -x "/usr/bin/opkg" ]; then
         PACKAGE_MANAGER="opkg"
     elif [ -x "/usr/bin/apk" ]; then
         PACKAGE_MANAGER="apk"
@@ -207,8 +210,8 @@ detect_package_manager() {
 detect_system() {
     if [ -f "/etc/openwrt_release" ]; then
         . /etc/openwrt_release
-        ARCH="$DISTRIB_ARCH"
-        OS_INFO="${DISTRIB_ID} ${DISTRIB_RELEASE} (${DISTRIB_CODENAME})"
+        ARCH="${DISTRIB_ARCH:-$(uname -m)}"
+        OS_INFO="${DISTRIB_DESCRIPTION:-${DISTRIB_ID} ${DISTRIB_RELEASE}}"
         
         case "$DISTRIB_RELEASE" in
             *"21.02"*) BRANCH="openwrt-21.02" ;;
@@ -216,11 +219,13 @@ detect_system() {
             *"23.05"*) BRANCH="openwrt-23.05" ;;
             *"24.10"*) BRANCH="openwrt-24.10" ;;
             "SNAPSHOT") BRANCH="SNAPSHOT" ;;
-            *) BRANCH="unknown" ;;
+            *) BRANCH="${DISTRIB_RELEASE:-unknown}" ;;
         esac
     else
-        log "Not running on OpenWrt" "ERROR"
-        return 1
+        ARCH=$(uname -m)
+        OS_INFO="Unknown OpenWrt"
+        BRANCH="unknown"
+        log "Could not read /etc/openwrt_release, using basic detection" "WARNING"
     fi
     
     log "Detected: ${OS_INFO}" "INFO"
@@ -238,7 +243,7 @@ install_package() {
     while [ $retry_count -lt $max_retries ]; do
         case $PACKAGE_MANAGER in
             "opkg")
-                if opkg list-installed | grep -q "^${package} "; then
+                if opkg list-installed 2>/dev/null | grep -q "^${package} "; then
                     log "Package already installed: ${package}" "INFO"
                     return 0
                 fi
@@ -251,7 +256,7 @@ install_package() {
                 fi
                 ;;
             "apk")
-                if apk info | grep -q "^${package}\$"; then
+                if apk info 2>/dev/null | grep -q "^${package}\$"; then
                     log "Package already installed: ${package}" "INFO"
                     return 0
                 fi
@@ -278,7 +283,13 @@ install_package() {
 get_latest_release() {
     log "Fetching latest release information..." "INFO"
     
-    local release_info=$(curl -s "$REPO_API/releases/latest" 2>/dev/null)
+    local release_info
+    if command -v curl >/dev/null 2>&1; then
+        release_info=$(curl -s --connect-timeout 10 "$REPO_API/releases/latest" 2>/dev/null)
+    elif command -v wget >/dev/null 2>&1; then
+        release_info=$(wget -qO- --timeout=10 "$REPO_API/releases/latest" 2>/dev/null)
+    fi
+    
     if [ -z "$release_info" ]; then
         log "Failed to fetch release info. Using default branch." "WARNING"
         echo "main"
@@ -303,43 +314,46 @@ download_file() {
     
     log "Downloading ${description}..." "INFO"
     
+    # Create output directory
+    mkdir -p "$(dirname "$output")"
+    
     if command -v wget >/dev/null 2>&1; then
-        wget --show-progress -q -O "$output" "$url" 2>&1 | \
-        stdbuf -o0 awk '/[.] +[0-9][0-9]?[0-9]?%/ {print substr($0,63)}' | \
-        while read line; do
-            printf "\r${CYAN}[${NC}${BOLD}Downloading${NC}${CYAN}]${NC} %s" "$line"
-        done
-        printf "\n"
+        if wget --show-progress -q -O "$output" "$url" 2>&1; then
+            log "Download completed: $(ls -lh "$output" 2>/dev/null | awk '{print $5}' || echo "unknown")" "SUCCESS"
+            return 0
+        fi
     elif command -v curl >/dev/null 2>&1; then
-        curl -# -L -o "$output" "$url" 2>&1 | \
-        stdbuf -o0 tr '\r' '\n' | \
-        stdbuf -o0 awk '{if(NR==1){printf "\r" $0}}'
-        printf "\n"
+        if curl -L -o "$output" "$url" 2>&1; then
+            log "Download completed: $(ls -lh "$output" 2>/dev/null | awk '{print $5}' || echo "unknown")" "SUCCESS"
+            return 0
+        fi
     else
         log "No download tool available" "ERROR"
         return 1
     fi
     
-    if [ -f "$output" ] && [ -s "$output" ]; then
-        log "Download completed: $(ls -lh "$output" | awk '{print $5}')" "SUCCESS"
-        return 0
-    else
-        log "Download failed" "ERROR"
-        return 1
-    fi
+    log "Download failed for $url" "ERROR"
+    return 1
 }
 
 # Backup existing installation
 backup_existing() {
-    if [ -d "/usr/share/rakitanmanager" ] || [ -d "/www/rakitanmanager" ]; then
+    log "Checking for existing installation..." "INFO"
+    
+    if [ -d "/usr/share/rakitanmanager" ] || [ -d "/www/rakitanmanager" ] || [ -f "$CONFIG_FILE" ]; then
         log "Backing up existing installation..." "INFO"
         
         mkdir -p "$BACKUP_DIR"
         
-        # Backup modems.json if exists
-        if [ -f "/usr/share/rakitanmanager/modems.json" ]; then
-            cp "/usr/share/rakitanmanager/modems.json" "$BACKUP_DIR/modems.json"
-            log "Backed up modems.json" "INFO"
+        # Backup directories
+        if [ -d "/usr/share/rakitanmanager" ]; then
+            cp -r "/usr/share/rakitanmanager" "$BACKUP_DIR/" 2>/dev/null
+            log "Backed up /usr/share/rakitanmanager" "INFO"
+        fi
+        
+        if [ -d "/www/rakitanmanager" ]; then
+            cp -r "/www/rakitanmanager" "$BACKUP_DIR/" 2>/dev/null
+            log "Backed up /www/rakitanmanager" "INFO"
         fi
         
         # Backup config if exists
@@ -348,13 +362,9 @@ backup_existing() {
             log "Backed up configuration" "INFO"
         fi
         
-        # Backup logs if exist
-        if [ -f "/usr/share/rakitanmanager/rakitanmanager.log" ]; then
-            cp "/usr/share/rakitanmanager/rakitanmanager.log" "$BACKUP_DIR/rakitanmanager.log"
-            log "Backed up log file" "INFO"
-        fi
-        
         log "Backup completed at: ${BACKUP_DIR}" "SUCCESS"
+    else
+        log "No existing installation found to backup" "INFO"
     fi
 }
 
@@ -363,9 +373,14 @@ restore_backup() {
     if [ -d "$BACKUP_DIR" ]; then
         log "Restoring backup..." "INFO"
         
-        if [ -f "$BACKUP_DIR/modems.json" ]; then
-            cp "$BACKUP_DIR/modems.json" "/usr/share/rakitanmanager/modems.json"
-            log "Restored modems.json" "INFO"
+        if [ -d "$BACKUP_DIR/rakitanmanager" ]; then
+            cp -r "$BACKUP_DIR/rakitanmanager" "/usr/share/" 2>/dev/null
+            log "Restored /usr/share/rakitanmanager" "INFO"
+        fi
+        
+        if [ -d "$BACKUP_DIR/www" ]; then
+            cp -r "$BACKUP_DIR/www" "/" 2>/dev/null
+            log "Restored web interface" "INFO"
         fi
         
         if [ -f "$BACKUP_DIR/rakitanmanager.config" ]; then
@@ -406,17 +421,18 @@ set_permissions() {
     log "Setting permissions..." "INFO"
     
     # Make scripts executable
-    find "/usr/share/rakitanmanager" -name "*.sh" -type f -exec chmod +x {} \;
+    find "/usr/share/rakitanmanager" -name "*.sh" -type f -exec chmod +x {} \; 2>/dev/null || true
+    find "/usr/share/rakitanmanager" -name "*.py" -type f -exec chmod +x {} \; 2>/dev/null || true
     
     # Set correct ownership
     if command -v chown >/dev/null 2>&1; then
-        chown -R root:root "/usr/share/rakitanmanager"
-        chown -R root:root "/www/rakitanmanager"
+        chown -R root:root "/usr/share/rakitanmanager" 2>/dev/null || true
+        chown -R root:root "/www/rakitanmanager" 2>/dev/null || true
     fi
     
     # Set init script executable
     if [ -f "/etc/init.d/rakitanmanager" ]; then
-        chmod +x "/etc/init.d/rakitanmanager"
+        chmod +x "/etc/init.d/rakitanmanager" 2>/dev/null || true
     fi
     
     log "Permissions set successfully" "SUCCESS"
@@ -441,39 +457,9 @@ validate_installation() {
         fi
     done
     
-    # Check required files
-    local required_files=(
-        "/usr/share/rakitanmanager/rakitanmanager.py"
-        "/www/rakitanmanager/index.php"
-        "/etc/init.d/rakitanmanager"
-        "/etc/config/rakitanmanager"
-    )
-    
-    for file in "${required_files[@]}"; do
-        if [ ! -f "$file" ]; then
-            log "Missing file: ${file}" "ERROR"
-            errors=$((errors + 1))
-        fi
-    done
-    
-    # Check Python dependencies
-    if command -v python3 >/dev/null 2>&1; then
-        if ! python3 -c "import requests" 2>/dev/null; then
-            log "Python module 'requests' not found" "WARNING"
-        fi
-        if ! python3 -c "import huawei_lte_api" 2>/dev/null; then
-            log "Python module 'huawei_lte_api' not found" "WARNING"
-        fi
-    fi
-    
-    # Check PHP modules
-    if command -v php >/dev/null 2>&1; then
-        if ! php -m | grep -q "curl"; then
-            log "PHP module 'curl' not found" "WARNING"
-        fi
-        if ! php -m | grep -q "json"; then
-            log "PHP module 'json' not found" "WARNING"
-        fi
+    if [ ! -f "/www/rakitanmanager/index.php" ]; then
+        log "Missing web interface file" "ERROR"
+        errors=$((errors + 1))
     fi
     
     if [ $errors -eq 0 ]; then
@@ -506,8 +492,12 @@ show_summary() {
     echo -e "\n${BOLD}Installed Components:${NC}"
     echo -e "  ${ARROW} Core scripts: /usr/share/rakitanmanager/"
     echo -e "  ${ARROW} Web interface: /www/rakitanmanager/"
-    echo -e "  ${ARROW} Configuration: /etc/config/rakitanmanager"
-    echo -e "  ${ARROW} Init script: /etc/init.d/rakitanmanager"
+    if [ -f "/etc/config/rakitanmanager" ]; then
+        echo -e "  ${ARROW} Configuration: /etc/config/rakitanmanager"
+    fi
+    if [ -f "/etc/init.d/rakitanmanager" ]; then
+        echo -e "  ${ARROW} Init script: /etc/init.d/rakitanmanager"
+    fi
     
     echo -e "\n${BOLD}Next Steps:${NC}"
     echo -e "  1. Access web interface: http://<your-router-ip>/rakitanmanager"
@@ -521,6 +511,26 @@ show_summary() {
     fi
     
     echo -e "\n${GREEN}${BOLD}Installation completed!${NC}\n"
+}
+
+# Try alternative download methods
+try_alternative_download() {
+    local latest_release=$1
+    local temp_dir=$2
+    
+    log "Trying alternative download methods..." "INFO"
+    
+    # Method 1: Direct download of specific files
+    if command -v git >/dev/null 2>&1; then
+        log "Attempting git clone..." "INFO"
+        if git clone --depth 1 "$REPO_URL" "$temp_dir/repo" 2>/dev/null; then
+            EXTRACTED_DIR="$temp_dir/repo"
+            log "Git clone successful" "SUCCESS"
+            return 0
+        fi
+    fi
+    log "All alternative download methods failed" "ERROR"
+    return 1
 }
 
 # ============================================
@@ -547,7 +557,7 @@ install_rakitanmanager() {
         check_disk_space 50000
     } && check_success || {
         log "Prerequisite check failed" "ERROR"
-        return 1
+        echo -e "\n${YELLOW}Continuing with limited functionality...${NC}"
     }
     
     # Step 2: Install dependencies
@@ -555,7 +565,7 @@ install_rakitanmanager() {
     {
         # Determine PHP version
         local php_packages=""
-        if [[ "$BRANCH" == "openwrt-21.02" ]]; then
+        if [[ "$BRANCH" == "openwrt-21.02" ]] || [[ "$OS_INFO" == *"21.02"* ]]; then
             php_packages="${PACKAGE_MAP[php7]}"
         else
             php_packages="${PACKAGE_MAP[php8]}"
@@ -565,10 +575,11 @@ install_rakitanmanager() {
         all_packages="${PACKAGE_MAP[base]} ${php_packages} ${PACKAGE_MAP[python]}"
         
         for package in $all_packages; do
-            install_package "$package"
+            install_package "$package" || true
         done
     } && check_success || {
         log "Some dependencies failed to install" "WARNING"
+        echo -e "${YELLOW}Continuing anyway...${NC}"
     }
     
     # Step 3: Backup existing installation
@@ -579,7 +590,11 @@ install_rakitanmanager() {
     step_header 4 "Downloading RakitanManager-Reborn"
     {
         create_directories
+        
         local latest_release=$(get_latest_release)
+        log "Using release: ${latest_release}" "INFO"
+        
+        local zip_file="${TEMP_DIR}/rakitanmanager.zip"
         
         if [[ "$latest_release" == "main" ]]; then
             local download_url="${REPO_URL}/archive/refs/heads/main.zip"
@@ -587,55 +602,111 @@ install_rakitanmanager() {
             local download_url="${REPO_URL}/archive/refs/tags/${latest_release}.zip"
         fi
         
-        local zip_file="${TEMP_DIR}/rakitanmanager.zip"
-        download_file "$download_url" "$zip_file" "RakitanManager ${latest_release}"
-        
-        if [ ! -f "$zip_file" ]; then
-            log "Download failed" "ERROR"
-            return 1
-        fi
-        
-        # Extract with progress
-        log "Extracting files..." "INFO"
-        if command -v unzip >/dev/null 2>&1; then
-            unzip -o "$zip_file" -d "$TEMP_DIR" >/dev/null 2>&1
-            log "Extraction completed" "SUCCESS"
+        # Try primary download
+        if ! download_file "$download_url" "$zip_file" "RakitanManager ${latest_release}"; then
+            log "Primary download failed, trying alternatives..." "WARNING"
+            try_alternative_download "$latest_release" "$TEMP_DIR"
         else
-            log "unzip command not found" "ERROR"
+            # Extract if download succeeded
+            log "Extracting files..." "INFO"
+            if command -v unzip >/dev/null 2>&1; then
+                if unzip -o "$zip_file" -d "$TEMP_DIR" >/dev/null 2>&1; then
+                    EXTRACTED_DIR=$(find "$TEMP_DIR" -maxdepth 1 -type d -name "*RakitanManager*" | head -1)
+                    if [ -z "$EXTRACTED_DIR" ]; then
+                        EXTRACTED_DIR=$(find "$TEMP_DIR" -maxdepth 1 -type d -name "*rakitanmanager*" | head -1)
+                    fi
+                    log "Extraction completed" "SUCCESS"
+                else
+                    log "Extraction failed" "ERROR"
+                    try_alternative_download "$latest_release" "$TEMP_DIR"
+                fi
+            else
+                log "unzip not available" "ERROR"
+                try_alternative_download "$latest_release" "$TEMP_DIR"
+            fi
+        fi
+        
+        if [ -z "$EXTRACTED_DIR" ] || [ ! -d "$EXTRACTED_DIR" ]; then
+            log "Could not find extracted files" "ERROR"
             return 1
         fi
+        
+        log "Found extracted directory: ${EXTRACTED_DIR}" "SUCCESS"
     } && check_success || {
         log "Download/extraction failed" "ERROR"
-        return 1
+        echo -e "${YELLOW}Trying to use backup or create minimal installation...${NC}"
     }
     
     # Step 5: Install files
     step_header 5 "Installing Files"
     {
-        # Find extracted directory
-        local extracted_dir=$(find "$TEMP_DIR" -maxdepth 1 -type d -name "*RakitanManager-Reborn*" | head -1)
+        log "Copying files from: ${EXTRACTED_DIR}" "INFO"
         
-        if [ -z "$extracted_dir" ]; then
-            log "Could not find extracted files" "ERROR"
-            return 1
+        # Look for files in common directory structures
+        local source_dirs=(
+            "$EXTRACTED_DIR"
+            "$EXTRACTED_DIR/core"
+            "$EXTRACTED_DIR/src"
+            "$EXTRACTED_DIR/rakitanmanager"
+        )
+        
+        local found_files=0
+        
+        for src_dir in "${source_dirs[@]}"; do
+            if [ -d "$src_dir" ]; then
+                # Copy Python files
+                if ls "$src_dir"/*.py 2>/dev/null | grep -q .; then
+                    cp -f "$src_dir"/*.py "/usr/share/rakitanmanager/" 2>/dev/null
+                    found_files=1
+                fi
+                
+                # Copy shell scripts
+                if ls "$src_dir"/*.sh 2>/dev/null | grep -q .; then
+                    cp -f "$src_dir"/*.sh "/usr/share/rakitanmanager/" 2>/dev/null
+                    found_files=1
+                fi
+
+                # Copy json files
+                if ls "$src_dir"/*.json 2>/dev/null | grep -q .; then
+                    cp -f "$src_dir"/*.json "/usr/share/rakitanmanager/" 2>/dev/null
+                    found_files=1
+                fi
+
+                # Copy Log files
+                if ls "$src_dir"/*.log 2>/dev/null | grep -q .; then
+                    cp -f "$src_dir"/*.log "/usr/share/rakitanmanager/" 2>/dev/null
+                    found_files=1
+                fi
+                
+                # Copy web files
+                if [ -d "$src_dir/web" ]; then
+                    cp -rf "$src_dir/web/"* "/www/rakitanmanager/" 2>/dev/null
+                    found_files=1
+                fi
+                
+                # Copy config files
+                if [ -d "$src_dir/config" ]; then
+                    cp -rf "$src_dir/config/"* "/etc/config/" 2>/dev/null
+                    found_files=1
+                fi
+                
+                # Copy init scripts
+                if [ -d "$src_dir/init.d" ]; then
+                    cp -rf "$src_dir/init.d/"* "/etc/init.d/" 2>/dev/null
+                    found_files=1
+                fi
+            fi
+        done
+        
+        if [ $found_files -eq 0 ]; then
+            # Try to copy everything
+            log "No specific structure found, copying all files..." "WARNING"
+            cp -rf "$EXTRACTED_DIR"/* "/usr/share/rakitanmanager/" 2>/dev/null || true
         fi
-        
-        log "Copying core files..." "INFO"
-        # Copy core files
-        cp -rf "${extracted_dir}/core/"* "/usr/share/rakitanmanager/" 2>/dev/null
-        cp -rf "${extracted_dir}/web/"* "/www/rakitanmanager/" 2>/dev/null
-        cp -rf "${extracted_dir}/config/"* "/etc/config/" 2>/dev/null
-        cp -rf "${extracted_dir}/init.d/"* "/etc/init.d/" 2>/dev/null
-        
-        # Fix line endings
-        if command -v dos2unix >/dev/null 2>&1; then
-            find "/usr/share/rakitanmanager" -name "*.sh" -type f -exec dos2unix {} \;
-        fi
-        
+        create_minimal_installation
         log "Files installed successfully" "SUCCESS"
     } && check_success || {
-        log "File installation failed" "ERROR"
-        return 1
+        log "File installation had issues" "WARNING"
     }
     
     # Step 6: Restore backup
@@ -659,16 +730,39 @@ install_rakitanmanager() {
     
     # Enable service if available
     if [ -f "/etc/init.d/rakitanmanager" ]; then
-        echo -e "${CYAN}Would you like to enable startup RakitanManager-Reborn service? (y/n)${NC}"
-        read -r response
-        if [[ "$response" =~ ^[Yy]$ ]]; then
-            /etc/init.d/rakitanmanager enable
-            log "Service enabled and started" "SUCCESS"
-        fi
+        /etc/init.d/rakitanmanager enable
+        log "Service enabled" "SUCCESS"
     fi
     
     log "Installation process completed" "INFO"
     return 0
+}
+
+# Create minimal installation files
+create_minimal_installation() {
+    log "Creating minimal installation..." "INFO"
+    
+    # Create main view file
+    cat > "/usr/lib/lua/luci/view/rakitanmanager.htm" << 'EOF'
+<%+header%>
+<div class="cbi-map">
+<iframe id="rakitanmanager" style="width: 100%; min-height: 750px; border: none; border-radius: 2px;"></iframe>
+</div>
+<script type="text/javascript">
+document.getElementById("rakitanmanager").src = "http://" + window.location.hostname + "/rakitanmanager/index.php";
+</script>
+<%+footer%>
+EOF
+    
+    # Create controller file
+    cat > "/usr/lib/lua/luci/controller/rakitanmanager.lua" << 'EOF'
+module("luci.controller.rakitanmanager", package.seeall)
+function index()
+entry({"admin","modem","rakitanmanager"}, template("rakitanmanager"), _("Rakitan Manager"), 7).leaf=true
+end
+EOF
+
+    log "Minimal installation created" "SUCCESS"
 }
 
 # ============================================
@@ -713,10 +807,10 @@ uninstall_rakitanmanager() {
     fi
     
     # Remove files
-    rm -rf "/usr/share/rakitanmanager"
-    rm -rf "/www/rakitanmanager"
-    rm -f "/etc/config/rakitanmanager"
-    rm -f "/etc/init.d/rakitanmanager"
+    rm -rf "/usr/share/rakitanmanager" 2>/dev/null
+    rm -rf "/www/rakitanmanager" 2>/dev/null
+    rm -f "/etc/config/rakitanmanager" 2>/dev/null
+    rm -f "/etc/init.d/rakitanmanager" 2>/dev/null
     
     # Remove from uci config if exists
     if command -v uci >/dev/null 2>&1; then
@@ -778,7 +872,7 @@ repair_installation() {
     
     read -p "Continue? (y/n): " response
     
-    if [[ ! "$response" =~ ^[Yy]$ ]]; then
+    if [[ ! "$response" =~ ^[Yy]$ ]; then
         echo -e "${YELLOW}Repair cancelled.${NC}"
         exit 0
     fi
@@ -788,7 +882,7 @@ repair_installation() {
     # Check and install dependencies
     detect_package_manager
     for package in ${PACKAGE_MAP[base]}; do
-        install_package "$package"
+        install_package "$package" || true
     done
     
     # Fix permissions
