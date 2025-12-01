@@ -17,7 +17,8 @@ BOLD='\033[1m'
 # ASCII Art Logo
 LOGO="
 ${CYAN}╔═══════════════════════════════════════════════════════════╗
-║${BOLD}               OpenWrt Rakitan Manager Installer               ${CYAN}║
+║${BOLD}               OpenWrt Rakitan Manager Installer             ${CYAN}║
+║${BOLD}                     Installer Version 1.0             ${CYAN}║
 ╚═══════════════════════════════════════════════════════════╝${NC}
 "
 
