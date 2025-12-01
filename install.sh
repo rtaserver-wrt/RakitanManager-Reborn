@@ -412,37 +412,6 @@ function index()
     entry({"admin","modem","rakitanmanager"}, template("rakitanmanager"), _("Rakitan Manager"), 7).leaf=true
 end
 EOF
-
-    # Create a minimal index.php
-    cat > /www/rakitanmanager/index.php << 'EOF'
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Rakitan Manager</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        .container { max-width: 800px; margin: 0 auto; }
-        .header { text-align: center; margin-bottom: 30px; }
-        .status { padding: 20px; background: #f0f0f0; border-radius: 5px; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>Rakitan Manager</h1>
-            <p>Installation successful. Please wait for the full application to be deployed.</p>
-        </div>
-        <div class="status">
-            <p><strong>Status:</strong> Installation complete</p>
-            <p><strong>Version:</strong> Minimal installation</p>
-            <p><strong>Next steps:</strong> Check logs and configure your modems</p>
-        </div>
-    </div>
-</body>
-</html>
-EOF
 }
 
 # ============================================
