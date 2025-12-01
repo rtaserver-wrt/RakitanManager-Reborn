@@ -131,42 +131,16 @@ jobs:
         if: steps.update_index.outputs.changed == 'true'
         run: echo "Perubahan pada index.php telah di-commit ke repository"
 
-      - name: Extract changelog for current version
+      - name: Add changelog info to new release description
         id: changelog
+        shell: bash
         run: |
-          # Cari bagian changelog untuk versi saat ini
-          version="${{ env.VERSION }}"
-          echo "Mencari changelog untuk versi: $version"
-          
-          # Pattern untuk mencari changelog
-          # Asumsi format CHANGELOG.md memiliki heading versi seperti ## [0.00.02]
-          if [ -f CHANGELOG.md ]; then
-            # Ekstrak konten dari heading versi saat ini sampai heading versi berikutnya
-            changelog_content=$(awk -v version="$version" '
-              /^## \[/ {
-                if (found && !stop) stop=1
-                if ($0 ~ "\\[" version "\\]") found=1
-              }
-              !stop && found && NR > 1 {
-                print
-              }
-            ' CHANGELOG.md)
-            
-            if [ -n "$changelog_content" ]; then
-              echo "Changelog ditemukan"
-              # Escape untuk output GitHub
-              changelog_content="${changelog_content//'%'/'%25'}"
-              changelog_content="${changelog_content//$'\n'/'%0A'}"
-              changelog_content="${changelog_content//$'\r'/'%0D'}"
-              echo "CHANGELOG=$changelog_content" >> $GITHUB_OUTPUT
-            else
-              echo "Changelog tidak ditemukan untuk versi $version"
-              echo "CHANGELOG=No changelog available for version $version" >> $GITHUB_OUTPUT
-            fi
-          else
-            echo "File CHANGELOG.md tidak ditemukan"
-            echo "CHANGELOG=No changelog file found" >> $GITHUB_OUTPUT
-          fi
+          r=$(awk '/^\*\*Changelog\*\*/ {if(found) exit; found=1} found' CHANGELOG.md)
+          r="${r//'%'/'%25'}"
+          r="${r//$'\n'/'%0A'}"
+          r="${r//$'\r'/'%0D'}"  
+          echo "CHANGELOG=$r" >> $GITHUB_OUTPUT
+
 
       - name: Create GitHub Release
         if: steps.update_index.outputs.changed == 'true'
