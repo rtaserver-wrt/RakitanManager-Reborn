@@ -3193,7 +3193,7 @@ if (isset($_GET['api']) && $_GET['api'] === 'clear_log') {
         </button>
         <a id="btn-download-update" href="#" target="_blank" 
           class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition">
-          <i class="fas fa-download"></i> Download Update
+          <i class="fas fa-cloud-download-alt"></i> Update
         </a>
       </div>
     </div>
@@ -3323,7 +3323,6 @@ if (isset($_GET['api']) && $_GET['api'] === 'clear_log') {
                     versionData.changelog = data.changelog;
                     
                     updateVersionDisplay();
-                    showUpdateDetails()
                     
                     if (data.update_available) {
                         addLogEntry(`Update available: ${data.current_version} → ${data.latest_version}`);
@@ -3521,7 +3520,7 @@ if (isset($_GET['api']) && $_GET['api'] === 'clear_log') {
         // Update download button
         const downloadBtn = document.getElementById('btn-download-update');
         if (downloadBtn && versionData.latest) {
-            downloadBtn.href = `https://github.com/rtaserver-wrt/RakitanManager-Reborn/releases/tag/${versionData.latest}`;
+            downloadBtn.href = `./update.php`;
         }
     }
 
@@ -4860,7 +4859,7 @@ if (isset($_GET['api']) && $_GET['api'] === 'clear_log') {
                 updateBadge.classList.remove('hidden');
                 updateBadge.innerHTML = `<i class="fas fa-download"></i> Update to ${versionData.latest}!`;
                 versionContainer.classList.add('highlight-update');
-                
+                showUpdateDetails();
                 // Remove highlight after animation
                 setTimeout(() => {
                     versionContainer.classList.remove('highlight-update');
