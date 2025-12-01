@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ============================================
-# RakitanManager Installer v2.0
+# RakitanManager-Reborn Installer v2.0
 # Modern, Robust, User-Friendly Installer
 # ============================================
 
@@ -494,7 +494,7 @@ install_rakitanmanager() {
     
     # Initialize log file
     > "$LOG_FILE"
-    log "Starting RakitanManager installation..." "INFO"
+    log "Starting RakitanManager-Reborn installation..." "INFO"
     
     # Step 1: Check prerequisites
     step_header 1 "System Check"
@@ -534,7 +534,7 @@ install_rakitanmanager() {
     backup_existing && check_success
     
     # Step 4: Download latest release
-    step_header 4 "Downloading RakitanManager"
+    step_header 4 "Downloading RakitanManager-Reborn"
     {
         create_directories
         local latest_release=$(get_latest_release)
@@ -571,7 +571,7 @@ install_rakitanmanager() {
     step_header 5 "Installing Files"
     {
         # Find extracted directory
-        local extracted_dir=$(find "$TEMP_DIR" -maxdepth 1 -type d -name "*RakitanManager*" | head -1)
+        local extracted_dir=$(find "$TEMP_DIR" -maxdepth 1 -type d -name "*RakitanManager-Reborn*" | head -1)
         
         if [ -z "$extracted_dir" ]; then
             log "Could not find extracted files" "ERROR"
@@ -617,7 +617,7 @@ install_rakitanmanager() {
     
     # Enable service if available
     if [ -f "/etc/init.d/rakitanmanager" ]; then
-        echo -e "${CYAN}Would you like to enable startup RakitanManager service? (y/n)${NC}"
+        echo -e "${CYAN}Would you like to enable startup RakitanManager-Reborn service? (y/n)${NC}"
         read -r response
         if [[ "$response" =~ ^[Yy]$ ]]; then
             /etc/init.d/rakitanmanager enable
@@ -683,7 +683,7 @@ uninstall_rakitanmanager() {
     fi
     
     log "Uninstallation completed" "SUCCESS"
-    echo -e "\n${GREEN}RakitanManager has been uninstalled.${NC}"
+    echo -e "\n${GREEN}RakitanManager-Reborn has been uninstalled.${NC}"
     echo -e "${YELLOW}Backup files are saved at: ${BACKUP_DIR}${NC}"
     echo -e "You can remove this directory if you don't need the backup.\n"
 }
@@ -700,11 +700,11 @@ update_rakitanmanager() {
     echo "╚═══════════════════════════════════════════════════════════╝${NC}\n"
     
     if [ ! -d "/usr/share/rakitanmanager" ]; then
-        echo -e "${RED}RakitanManager is not installed. Please install it first.${NC}\n"
+        echo -e "${RED}RakitanManager-Reborn is not installed. Please install it first.${NC}\n"
         exit 1
     fi
     
-    echo -e "This will update RakitanManager to the latest version.\n"
+    echo -e "This will update RakitanManager-Reborn to the latest version.\n"
     read -p "Continue? (y/n): " response
     
     if [[ ! "$response" =~ ^[Yy]$ ]]; then
@@ -727,7 +727,7 @@ repair_installation() {
     echo "║                  REPAIR INSTALLATION                      ║"
     echo "╚═══════════════════════════════════════════════════════════╝${NC}\n"
     
-    echo -e "This will attempt to repair your RakitanManager installation.\n"
+    echo -e "This will attempt to repair your RakitanManager-Reborn installation.\n"
     echo -e "The following will be checked and fixed:"
     echo -e "  ${ARROW} Missing dependencies"
     echo -e "  ${ARROW} File permissions"
@@ -767,10 +767,10 @@ show_menu() {
     echo -e "$LOGO"
     
     echo -e "${CYAN}${BOLD}Select an option:${NC}\n"
-    echo -e "  ${GREEN}1${NC}. Install RakitanManager (Fresh installation)"
-    echo -e "  ${YELLOW}2${NC}. Update RakitanManager (To latest version)"
+    echo -e "  ${GREEN}1${NC}. Install RakitanManager-Reborn (Fresh installation)"
+    echo -e "  ${YELLOW}2${NC}. Update RakitanManager-Reborn (To latest version)"
     echo -e "  ${BLUE}3${NC}. Repair Installation (Fix issues)"
-    echo -e "  ${RED}4${NC}. Uninstall RakitanManager (Remove completely)"
+    echo -e "  ${RED}4${NC}. Uninstall RakitanManager-Reborn (Remove completely)"
     echo -e "  ${CYAN}5${NC}. Check System Compatibility"
     echo -e "  ${WHITE}6${NC}. View Installation Log"
     echo -e "  ${GRAY}0${NC}. Exit\n"
