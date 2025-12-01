@@ -312,21 +312,19 @@ install_rakitanmanager() {
         create_directories
         if command -v git >/dev/null 2>&1; then
             log "Cloning repository instead..." "INFO"
-            if git clone --depth 1 "$REPO_URL" "$TEMP_DIR/repo" 2>/dev/null; then
-                EXTRACTED_DIR="$TEMP_DIR/repo"
+            if git clone --depth 1 "$REPO_URL" "$TEMP_DIR" 2>/dev/null; then
+                EXTRACTED_DIR="$TEMP_DIR"
                 log "Cloned repository to: $EXTRACTED_DIR" "SUCCESS"
             else
-                log "All download methods failed — cannot proceed" "ERROR"
+                log "Git clone failed" "ERROR"
                 exit 1
             fi
         else
             log "Git not available — cannot proceed" "ERROR"
             exit 1
         fi
-
-        [ -z "$EXTRACTED_DIR" ] && { log "Extraction failed — no source found" "ERROR"; exit 1; }
     )
-    check_success || { log "Download/extraction failed" "ERROR"; exit 1; }
+    check_success || { log "Download failed" "ERROR"; exit 1; }
 
     # Step 5: Install Files
     step_header 5 "Installing Files"
