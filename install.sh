@@ -20,8 +20,8 @@ CROSS_MARK="✗"
 ARROW="➜"
 
 # Configuration
-REPO_URL="https://github.com/rtaserver/RakitanManager-Reborn"
-REPO_API="https://api.github.com/repos/rtaserver/RakitanManager-Reborn"
+REPO_URL="https://github.com/rtaserver-wrt/RakitanManager-Reborn"
+REPO_API="https://api.github.com/repos/rtaserver-wrt/RakitanManager-Reborn"
 TEMP_DIR="/tmp/rakitanmanager_install"
 BACKUP_DIR="/tmp/rakitanmanager_backup"
 LOG_FILE="/tmp/rakitanmanager_install.log"

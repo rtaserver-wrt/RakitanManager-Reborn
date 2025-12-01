@@ -4,14 +4,14 @@
 
 ### Modern USB Modem Management for OpenWrt
 
-[![Release](https://img.shields.io/github/v/release/rtaserver/RakitanManager-Reborn?style=for-the-badge&logo=github&color=blue)](https://github.com/rtaserver/RakitanManager-Reborn/releases)
+[![Release](https://img.shields.io/github/v/release/rtaserver/RakitanManager-Reborn?style=for-the-badge&logo=github&color=blue)](https://github.com/rtaserver-wrt/RakitanManager-Reborn/releases)
 [![License](https://img.shields.io/github/license/rtaserver/RakitanManager-Reborn?style=for-the-badge&logo=opensourceinitiative&logoColor=white)](LICENSE)
-[![Stars](https://img.shields.io/github/stars/rtaserver/RakitanManager-Reborn?style=for-the-badge&logo=github)](https://github.com/rtaserver/RakitanManager-Reborn/stargazers)
-[![Issues](https://img.shields.io/github/issues/rtaserver/RakitanManager-Reborn?style=for-the-badge&logo=github)](https://github.com/rtaserver/RakitanManager-Reborn/issues)
+[![Stars](https://img.shields.io/github/stars/rtaserver/RakitanManager-Reborn?style=for-the-badge&logo=github)](https://github.com/rtaserver-wrt/RakitanManager-Reborn/stargazers)
+[![Issues](https://img.shields.io/github/issues/rtaserver/RakitanManager-Reborn?style=for-the-badge&logo=github)](https://github.com/rtaserver-wrt/RakitanManager-Reborn/issues)
 
 **RakitanManager-Reborn** adalah platform manajemen modem USB/4G/5G yang ringan dan modular, dirancang khusus untuk perangkat OpenWrt. Kelola multiple modem dengan mudah melalui antarmuka web yang intuitif.
 
-[Dokumentasi](https://github.com/rtaserver/RakitanManager-Reborn/wiki) • [Laporkan Bug](https://github.com/rtaserver/RakitanManager-Reborn/issues) • [Request Fitur](https://github.com/rtaserver/RakitanManager-Reborn/issues)
+[Dokumentasi](https://github.com/rtaserver-wrt/RakitanManager-Reborn/wiki) • [Laporkan Bug](https://github.com/rtaserver-wrt/RakitanManager-Reborn/issues) • [Request Fitur](https://github.com/rtaserver-wrt/RakitanManager-Reborn/issues)
 
 </div>
 
@@ -212,7 +212,7 @@ Proyek ini dilisensikan di bawah **MIT License** - lihat file [LICENSE](LICENSE)
 
 ## 🌟 Acknowledgments
 
-- Terima kasih kepada semua [contributors](https://github.com/rtaserver/RakitanManager-Reborn/graphs/contributors)
+- Terima kasih kepada semua [contributors](https://github.com/rtaserver-wrt/RakitanManager-Reborn/graphs/contributors)
 - Inspired by komunitas OpenWrt
 - Built with ❤️ for embedded enthusiasts
 
@@ -222,9 +222,9 @@ Proyek ini dilisensikan di bawah **MIT License** - lihat file [LICENSE](LICENSE)
 
 ### 📞 Kontak & Support
 
-[![GitHub](https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github)](https://github.com/rtaserver/RakitanManager-Reborn)
-[![Issues](https://img.shields.io/badge/Issues-Report%20Bug-red?style=for-the-badge&logo=github)](https://github.com/rtaserver/RakitanManager-Reborn/issues)
-[![Discussions](https://img.shields.io/badge/Discussions-Join%20Chat-blue?style=for-the-badge&logo=github)](https://github.com/rtaserver/RakitanManager-Reborn/discussions)
+[![GitHub](https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github)](https://github.com/rtaserver-wrt/RakitanManager-Reborn)
+[![Issues](https://img.shields.io/badge/Issues-Report%20Bug-red?style=for-the-badge&logo=github)](https://github.com/rtaserver-wrt/RakitanManager-Reborn/issues)
+[![Discussions](https://img.shields.io/badge/Discussions-Join%20Chat-blue?style=for-the-badge&logo=github)](https://github.com/rtaserver-wrt/RakitanManager-Reborn/discussions)
 
 **Dibuat dengan 💙 oleh [RTA Server](https://github.com/rtaserver)**
 

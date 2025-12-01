@@ -360,7 +360,7 @@ function githubApiRequest($url, $cacheKey = null, $cacheDuration = 300) {
 
 // API: Get Latest Version from GitHub Releases (with cache)
 if (isset($_GET['api']) && $_GET['api'] === 'get_latest_version') {
-    $owner = 'rtaserver';
+    $owner = 'rtaserver-wrt';
     $repo = 'RakitanManager-Reborn';
     
     $apiUrl = "https://api.github.com/repos/{$owner}/{$repo}/releases/latest";
@@ -420,7 +420,7 @@ if (isset($_GET['api']) && $_GET['api'] === 'get_latest_version') {
 
 // API: Get All Releases from GitHub (with cache and pagination)
 if (isset($_GET['api']) && $_GET['api'] === 'get_all_releases') {
-    $owner = 'rtaserver';
+    $owner = 'rtaserver-wrt';
     $repo = 'RakitanManager-Reborn';
     $perPage = isset($_GET['per_page']) ? min(max(intval($_GET['per_page']), 1), 100) : 10;
     $page = isset($_GET['page']) ? max(intval($_GET['page']), 1) : 1;
@@ -477,7 +477,7 @@ if (isset($_GET['api']) && $_GET['api'] === 'get_all_releases') {
 
 // API: Get Changelog from CHANGELOG.md (with improved cache and fallback)
 if (isset($_GET['api']) && $_GET['api'] === 'get_changelog') {
-    $owner = 'rtaserver';
+    $owner = 'rtaserver-wrt';
     $repo = 'RakitanManager-Reborn';
     $branch = $_GET['branch'] ?? 'main';
     
@@ -599,7 +599,7 @@ if (isset($_GET['api']) && $_GET['api'] === 'get_changelog') {
 
 // API: Compare Current Version with Latest (with cache)
 if (isset($_GET['api']) && $_GET['api'] === 'check_update') {
-    $owner = 'rtaserver';
+    $owner = 'rtaserver-wrt';
     $repo = 'RakitanManager-Reborn';
     $currentVersion = $_GET['current_version'] ?? '';
     
@@ -968,7 +968,7 @@ if (isset($_GET['api']) && $_GET['api'] === 'get_version_info') {
         $response['current_source'] = $source;
 
         // Get latest version using internal GitHub request (same logic as get_latest_version)
-        $owner = 'rtaserver';
+        $owner = 'rtaserver-wrt';
         $repo = 'RakitanManager-Reborn';
         $apiUrl = "https://api.github.com/repos/{$owner}/{$repo}/releases/latest";
         $cacheKey = "latest_release_{$owner}_{$repo}";
@@ -2628,7 +2628,7 @@ if (isset($_GET['api']) && $_GET['api'] === 'clear_log') {
           
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
             <!-- GitHub Button -->
-            <a href="https://github.com/rtaserver/RakitanManager-Reborn" target="_blank" style="background: #24292e; color: white; border-radius: 1rem; padding: 1.25rem; display: flex; align-items: center; justify-content: center; text-decoration: none; transition: all 0.2s; box-shadow: 0 4px 12px rgba(0,0,0,0.1);" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.2)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)';">
+            <a href="https://github.com/rtaserver-wrt/RakitanManager-Reborn" target="_blank" style="background: #24292e; color: white; border-radius: 1rem; padding: 1.25rem; display: flex; align-items: center; justify-content: center; text-decoration: none; transition: all 0.2s; box-shadow: 0 4px 12px rgba(0,0,0,0.1);" onmouseover="this.style.transform='translateY(-4px)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.2)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)';">
               <i class="fab fa-github" style="font-size: 1.75rem; margin-right: 1rem;"></i>
               <div style="text-align: left;">
                 <div style="font-size: 0.75rem; color: rgba(255,255,255,0.7);">View on</div>
@@ -3401,7 +3401,7 @@ if (isset($_GET['api']) && $_GET['api'] === 'clear_log') {
         // Ensure download link is set immediately
         const downloadBtnInit = document.getElementById('btn-download-update');
         if (downloadBtnInit && versionData.latest) {
-            downloadBtnInit.href = `https://github.com/rtaserver/RakitanManager-Reborn/releases/tag/${versionData.latest}`;
+            downloadBtnInit.href = `https://github.com/rtaserver-wrt/RakitanManager-Reborn/releases/tag/${versionData.latest}`;
         }
     }
 
@@ -3531,7 +3531,7 @@ if (isset($_GET['api']) && $_GET['api'] === 'clear_log') {
         // Update download button
         const downloadBtn = document.getElementById('btn-download-update');
         if (downloadBtn && versionData.latest) {
-            downloadBtn.href = `https://github.com/rtaserver/RakitanManager-Reborn/releases/tag/${versionData.latest}`;
+            downloadBtn.href = `https://github.com/rtaserver-wrt/RakitanManager-Reborn/releases/tag/${versionData.latest}`;
         }
     }
 

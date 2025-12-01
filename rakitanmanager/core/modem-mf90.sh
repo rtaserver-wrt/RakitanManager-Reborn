@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2024 RTA SERVER
+# Copyright 2025 RTASERVER-WRT
 
 log_file="/usr/share/rakitanmanager/rakitanmanager.log"
 exec 1>>"$log_file" 2>&1

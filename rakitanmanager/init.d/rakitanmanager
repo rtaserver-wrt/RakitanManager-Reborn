@@ -1,5 +1,5 @@
 #!/bin/sh /etc/rc.common
-# (C) 2025 rtaserver
+# (C) 2025 rtaserver-wrt
 # RakitanManager service control script
 
 START=99
