@@ -131,19 +131,29 @@ jobs:
         if: steps.update_index.outputs.changed == 'true'
         run: echo "Perubahan pada index.php telah di-commit ke repository"
 
-      - name: Add changelog info to new release description
+      - name: Extract changelog for current version
         id: changelog
         shell: bash
         run: |
-          r=$(awk '/^\*\*Changelog\*\*/ {if(found) exit; found=1} found' CHANGELOG.md)
-          r="${r//'%'/'%25'}"
-          r="${r//$'\n'/'%0A'}"
-          r="${r//$'\r'/'%0D'}"  
-          echo "CHANGELOG=$r" >> $GITHUB_OUTPUT
-
+          version="${{ env.VERSION }}"
+          lastupdate="${{ env.LASTUPDATE }}"
+          
+          pattern="\*\*Changelog.*v${version}.*${lastupdate}.*\*\*"
+          
+          changelog_content=$(awk -v pattern="$pattern" '
+            $0 ~ pattern {found=1; next}
+            found && /^\*\*Changelog/ {exit}
+            found {print}
+          ' CHANGELOG.md)
+          
+          changelog_content=$(echo "$changelog_content" | sed '/^[[:space:]]*$/d')
+          
+          echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
+          echo "$changelog_content" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ env.VERSION }}
           name: "RakitanManager v${{ env.VERSION }}"

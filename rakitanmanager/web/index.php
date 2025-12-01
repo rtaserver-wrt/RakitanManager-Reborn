@@ -524,13 +524,52 @@ if (isset($_GET['api']) && $_GET['api'] === 'get_changelog') {
         foreach ($changelogFiles as $filename) {
             $rawUrl = "https://raw.githubusercontent.com/{$owner}/{$repo}/{$branch}/{$filename}";
             
-            // Use our improved GitHub request function
-            $result = githubApiRequest($rawUrl, "changelog_raw_{$filename}", 600);
+            // Use direct fetch for raw content (not JSON API)
+            $token = getGitHubToken();
             
-            if ($result['success'] && !empty($result['data'])) {
-                $changelogContent = $result['data'];
-                $foundFile = $filename;
-                break;
+            // Try cURL first
+            if (function_exists('curl_init')) {
+                $ch = curl_init();
+                curl_setopt_array($ch, [
+                    CURLOPT_URL => $rawUrl,
+                    CURLOPT_RETURNTRANSFER => true,
+                    CURLOPT_FOLLOWLOCATION => true,
+                    CURLOPT_USERAGENT => 'RakitanManager/1.0',
+                    CURLOPT_TIMEOUT => 15,
+                    CURLOPT_CONNECTTIMEOUT => 10,
+                    CURLOPT_SSL_VERIFYPEER => true,
+                    CURLOPT_HTTPHEADER => $token ? [
+                        'Authorization: token ' . $token
+                    ] : []
+                ]);
+                
+                $response = curl_exec($ch);
+                $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                curl_close($ch);
+                
+                if ($httpCode === 200 && !empty($response)) {
+                    $changelogContent = $response;
+                    $foundFile = $filename;
+                    break;
+                }
+            } else {
+                // Fallback to file_get_contents
+                $context = stream_context_create([
+                    'http' => [
+                        'method' => 'GET',
+                        'header' => "User-Agent: RakitanManager/1.0\r\n" .
+                                   ($token ? "Authorization: token {$token}\r\n" : ''),
+                        'timeout' => 15
+                    ]
+                ]);
+                
+                $response = @file_get_contents($rawUrl, false, $context);
+                
+                if ($response !== false && !empty($response)) {
+                    $changelogContent = $response;
+                    $foundFile = $filename;
+                    break;
+                }
             }
         }
         
@@ -2546,7 +2585,7 @@ if (isset($_GET['api']) && $_GET['api'] === 'clear_log') {
             <i class="fas fa-wifi" style="font-size: 2rem;"></i>
           </div>
           <h2 style="font-size: 1.75rem; font-weight: 700; margin-bottom: 0.5rem;">OpenWrt Rakitan Manager</h2>
-          <p style="color: rgba(255,255,255,0.9); font-size: 0.95rem;">Dashboard kontrol dan monitoring modem USB dengan ADB dinamis</p>
+          <p style="color: rgba(255,255,255,0.9); font-size: 0.95rem;">Smart Modem Manager Dashboard – Multi Device Support</p>
         </div>
       </div>
       
@@ -2696,7 +2735,7 @@ if (isset($_GET['api']) && $_GET['api'] === 'clear_log') {
                         <div class="flex items-start justify-between gap-4">
                             <div class="flex-1">
                                 <h1 class="text-2xl lg:text-3xl font-extrabold text-gray-900 mb-1">OpenWrt Rakitan Manager</h1>
-                                <p class="text-sm text-gray-600 mb-4">Dashboard kontrol dan monitoring modem USB dengan ADB dinamis</p>
+                                <p class="text-sm text-gray-600 mb-4">Smart Modem Manager Dashboard</p>
                             </div>
                             <div class="flex-shrink-0">
                                 <button id="about-btn" class="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-800 px-3 py-2 rounded-md" onclick="showAboutModal()">
@@ -3284,7 +3323,7 @@ if (isset($_GET['api']) && $_GET['api'] === 'clear_log') {
                     versionData.changelog = data.changelog;
                     
                     updateVersionDisplay();
-                    showUpdateNotificationIfAvailable();
+                    showUpdateDetails()
                     
                     if (data.update_available) {
                         addLogEntry(`Update available: ${data.current_version} → ${data.latest_version}`);
@@ -3353,55 +3392,6 @@ if (isset($_GET['api']) && $_GET['api'] === 'clear_log') {
                 updateBadge.classList.add('hidden');
                 versionContainer.classList.remove('highlight-update');
             }
-        }
-    }
-
-    // Show update notification if available
-    function showUpdateNotificationIfAvailable() {
-        if (!versionData.updateAvailable) return;
-        
-        const existingNotification = document.getElementById('update-notification');
-        if (existingNotification) return;
-        
-        const notification = document.createElement('div');
-        notification.id = 'update-notification';
-        notification.className = 'update-notification';
-        notification.innerHTML = `
-            <div style="position: relative; width: 100%;">
-                <button class="update-close-btn" onclick="dismissUpdateNotification()" aria-label="Close update notification">
-                    <i class="fas fa-times" aria-hidden="true"></i>
-                </button>
-                <div class="update-body">
-                    <h4>
-                        <i class="fas fa-download" style="color:#0ea5a4"></i>
-                        New Version Available!
-                    </h4>
-                    <p aria-live="polite">
-                        Upgrade from <strong>v${versionData.current}</strong> to <strong>${versionData.latest}</strong> — the latest features and improvements are ready to install.
-                    </p>
-                </div>
-                <div class="update-actions">
-                    <button onclick="showUpdateDetails()" class="btn btn-warning btn-sm" aria-haspopup="dialog">
-                        <i class="fas fa-info-circle"></i>&nbsp;Details
-                    </button>
-                    <a id="btn-download-update" class="btn btn-primary btn-sm" href="#" role="button">
-                        <i class="fas fa-download"></i>&nbsp;Download
-                    </a>
-                </div>
-            </div>
-        `;
-
-        // Append to body as floating overlay
-        document.body.appendChild(notification);
-        // Accessibility: announce and focus the notification briefly
-        notification.setAttribute('role', 'status');
-        notification.tabIndex = -1;
-        try { notification.focus(); } catch (e) { /* ignore focus issues */ }
-
-        // Ensure download link is set immediately
-        const downloadBtnInit = document.getElementById('btn-download-update');
-        if (downloadBtnInit && versionData.latest) {
-            downloadBtnInit.href = `https://github.com/rtaserver-wrt/RakitanManager-Reborn/releases/tag/${versionData.latest}`;
         }
     }
 
