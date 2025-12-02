@@ -426,7 +426,7 @@ extract_release() {
     # Extract to temp directory
     if unzip -q "$DOWNLOADED_FILE" -d "$TEMP_DIR" 2>/dev/null; then
         # Find extracted directory (usually named with tag)
-        EXTRACTED_DIR=$(find "$TEMP_DIR" -maxdepth 1 -type d -name "*RakitanManager*" 2>/dev/null | head -1)
+        EXTRACTED_DIR=$(find "$TEMP_DIR" -maxdepth 1 -type d -name "*RakitanManager-Reborn-*" 2>/dev/null | head -1)
         
         if [ -n "$EXTRACTED_DIR" ] && [ -d "$EXTRACTED_DIR" ]; then
             log "Extracted to: $EXTRACTED_DIR" "SUCCESS"
