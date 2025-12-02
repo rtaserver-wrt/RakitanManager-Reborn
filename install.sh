@@ -395,6 +395,8 @@ download_release() {
             if command -v unzip >/dev/null 2>&1; then
                 if unzip -t "$DOWNLOADED_FILE" >/dev/null 2>&1; then
                     log "ZIP file verification passed" "SUCCESS"
+                    #DeBUG Check Extracted Directory
+                    EXTRACTED_DIR="$TEMP_DIR/RakitanManager-Reborn-$tag"
                     return 0
                 else
                     log "ZIP file appears to be corrupted" "ERROR"
