@@ -419,10 +419,6 @@ extract_release() {
     
     log "Extracting release $tag..." "INFO"
     
-    # Clean temp directory
-    rm -rf "$TEMP_DIR" 2>/dev/null
-    mkdir -p "$TEMP_DIR"
-    
     # Extract to temp directory
     if unzip -q "$DOWNLOADED_FILE" -d "$TEMP_DIR" 2>/dev/null; then
         EXTRACTED_DIR="/tmp/rakitanmanager_install/RakitanManager-Reborn-$tag"
