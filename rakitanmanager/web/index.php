@@ -2576,10 +2576,6 @@ if (isset($_GET['api']) && $_GET['api'] === 'clear_log') {
     <div class="glass-card w-full max-w-2xl max-h-[90vh] overflow-y-auto" style="border-radius: 1.5rem;">
       <!-- Header dengan Gradient -->
       <div class="relative" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 2rem; border-radius: 1.5rem 1.5rem 0 0;">
-        <button onclick="closeAboutModal()" style="position: absolute; top: 1rem; right: 1rem; width: 2.5rem; height: 2.5rem; background: rgba(255,255,255,0.2); backdrop-filter: blur(10px); border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s;">
-          <i class="fas fa-times" style="color: white; font-size: 1.25rem;"></i>
-        </button>
-        
         <div style="text-align: center; color: white;">
           <div style="width: 5rem; height: 5rem; background: rgba(255,255,255,0.2); backdrop-filter: blur(10px); border-radius: 1.25rem; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem; box-shadow: 0 8px 32px rgba(0,0,0,0.1);">
             <i class="fas fa-wifi" style="font-size: 2rem;"></i>
