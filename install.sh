@@ -414,28 +414,6 @@ download_release() {
     fi
 }
 
-extract_release() {
-    local tag="$1"
-    
-    log "Extracting release $tag..." "INFO"
-    
-    # Extract to temp directory
-    if unzip -q "$DOWNLOADED_FILE" -d "$TEMP_DIR" 2>/dev/null; then
-        EXTRACTED_DIR="/tmp/rakitanmanager_install/RakitanManager-Reborn-$tag"
-        
-        if [ -n "$EXTRACTED_DIR" ] && [ -d "$EXTRACTED_DIR" ]; then
-            log "Extracted to: $EXTRACTED_DIR" "SUCCESS"
-            return 0
-        else
-            log "Could not find extracted directory" "ERROR"
-            return 1
-        fi
-    else
-        log "Failed to extract ZIP file" "ERROR"
-        return 1
-    fi
-}
-
 # ============================================
 # Package Manager Specific Functions
 # ============================================
@@ -544,12 +522,6 @@ install_rakitanmanager() {
         # Download release
         if ! download_release "$LATEST_TAG"; then
             log "Failed to download release" "ERROR"
-            exit 1
-        fi
-        
-        # Extract release
-        if ! extract_release "$LATEST_TAG"; then
-            log "Failed to extract release" "ERROR"
             exit 1
         fi
         
