@@ -292,8 +292,10 @@ install_rakitanmanager() {
     step_header 4 "Installing Files"
     (
         if [ -f "/etc/init.d/rakitanmanager" ]; then
-            log "Stopping existing service..." "INFO"
-            /etc/init.d/rakitanmanager stop 2>/dev/null || true
+            if pidof core-manager.sh >/dev/null; then
+                killall -9 core-manager.sh 2>/dev/null || true
+                log "Terminated running core-manager.sh process" "INFO"
+            fi
         fi
 
         # Copy config file

@@ -166,8 +166,10 @@ install_files() {
     
     # Stop service if running
     if [ -f "/etc/init.d/rakitanmanager" ]; then
-        /etc/init.d/rakitanmanager stop 2>/dev/null
-        log_message "Stopped service"
+        if pidof core-manager.sh >/dev/null; then
+            killall -9 core-manager.sh 2>/dev/null || true
+            log_message "Terminated running core-manager.sh process" "INFO"
+        fi
     fi
 
     if [ -d "/usr/share/rakitanmanager" ]; then
