@@ -425,8 +425,7 @@ extract_release() {
     
     # Extract to temp directory
     if unzip -q "$DOWNLOADED_FILE" -d "$TEMP_DIR" 2>/dev/null; then
-        # Find extracted directory (usually named with tag)
-        EXTRACTED_DIR=$(find "$TEMP_DIR" -maxdepth 1 -type d -name "*RakitanManager-Reborn-*" 2>/dev/null | head -1)
+        EXTRACTED_DIR="/tmp/rakitanmanager_install/RakitanManager-Reborn-$tag"
         
         if [ -n "$EXTRACTED_DIR" ] && [ -d "$EXTRACTED_DIR" ]; then
             log "Extracted to: $EXTRACTED_DIR" "SUCCESS"
@@ -566,14 +565,8 @@ install_rakitanmanager() {
     step_header 4 "Installing Files"
     (
         if [ -z "$EXTRACTED_DIR" ] || [ ! -d "$EXTRACTED_DIR" ]; then
-            log "Extracted directory not found. Trying alternative detection..." "ERROR"
-            # Try alternative detection
-            EXTRACTED_DIR=$(ls -d "$TEMP_DIR"/* 2>/dev/null | head -1)
-            if [ -z "$EXTRACTED_DIR" ] || [ ! -d "$EXTRACTED_DIR" ]; then
-                log "Still cannot find extracted directory" "ERROR"
-                exit 1
-            fi
-            log "Using alternative directory: $EXTRACTED_DIR" "INFO"
+            log "Extracted directory not found." "ERROR"
+            exit 1
         fi
 
         if [ -f "/etc/init.d/rakitanmanager" ]; then
@@ -595,10 +588,6 @@ install_rakitanmanager() {
         local config_src=""
         if [ -f "$EXTRACTED_DIR/rakitanmanager/config/rakitanmanager" ]; then
             config_src="$EXTRACTED_DIR/rakitanmanager/config/rakitanmanager"
-        elif [ -f "$EXTRACTED_DIR/config/rakitanmanager" ]; then
-            config_src="$EXTRACTED_DIR/config/rakitanmanager"
-        elif [ -f "$EXTRACTED_DIR/etc/config/rakitanmanager" ]; then
-            config_src="$EXTRACTED_DIR/etc/config/rakitanmanager"
         fi
         
         if [ -n "$config_src" ] && [ -f "$config_src" ]; then
@@ -621,10 +610,6 @@ install_rakitanmanager() {
         local core_src=""
         if [ -d "$EXTRACTED_DIR/rakitanmanager/core" ]; then
             core_src="$EXTRACTED_DIR/rakitanmanager/core"
-        elif [ -d "$EXTRACTED_DIR/core" ]; then
-            core_src="$EXTRACTED_DIR/core"
-        elif [ -d "$EXTRACTED_DIR/usr/share/rakitanmanager" ]; then
-            core_src="$EXTRACTED_DIR/usr/share/rakitanmanager"
         fi
         
         if [ -n "$core_src" ] && [ -d "$core_src" ]; then
@@ -647,10 +632,6 @@ install_rakitanmanager() {
         local init_src=""
         if [ -f "$EXTRACTED_DIR/rakitanmanager/init.d/rakitanmanager" ]; then
             init_src="$EXTRACTED_DIR/rakitanmanager/init.d/rakitanmanager"
-        elif [ -f "$EXTRACTED_DIR/init.d/rakitanmanager" ]; then
-            init_src="$EXTRACTED_DIR/init.d/rakitanmanager"
-        elif [ -f "$EXTRACTED_DIR/etc/init.d/rakitanmanager" ]; then
-            init_src="$EXTRACTED_DIR/etc/init.d/rakitanmanager"
         fi
         
         if [ -n "$init_src" ] && [ -f "$init_src" ]; then
@@ -673,10 +654,6 @@ install_rakitanmanager() {
         local web_src=""
         if [ -d "$EXTRACTED_DIR/rakitanmanager/web" ]; then
             web_src="$EXTRACTED_DIR/rakitanmanager/web"
-        elif [ -d "$EXTRACTED_DIR/web" ]; then
-            web_src="$EXTRACTED_DIR/web"
-        elif [ -d "$EXTRACTED_DIR/www/rakitanmanager" ]; then
-            web_src="$EXTRACTED_DIR/www/rakitanmanager"
         fi
         
         if [ -n "$web_src" ] && [ -d "$web_src" ]; then
@@ -816,7 +793,7 @@ show_menu() {
     clear
     echo -e "${CYAN}╔═══════════════════════════════════════════════════════════╗"
     echo -e "║${BOLD}               OpenWrt Rakitan Manager Installer           ${CYAN}║"
-    echo -e "║${BOLD}                     Installer Version 2.6                 ${CYAN}║"
+    echo -e "║${BOLD}                     Installer Version 2.7                 ${CYAN}║"
     echo -e "║${BOLD}               Multi-System Support (opkg/apk)             ${CYAN}║"
     echo -e "╚═══════════════════════════════════════════════════════════╝${NC}"
     echo -e "\n"
