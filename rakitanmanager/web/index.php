@@ -1502,8 +1502,8 @@ if (isset($_GET['api']) && $_GET['api'] === 'get_network_stats') {
                 $rx_diff = $stats['bytes_rx'] - $prev['bytes_rx'];
                 $tx_diff = $stats['bytes_tx'] - $prev['bytes_tx'];
 
-                $response['download_speed'] = round(($rx_diff * 8) / ($time_diff * 1000000), 2);
-                $response['upload_speed'] = round(($tx_diff * 8) / ($time_diff * 1000000), 2);
+                $response['download_speed'] = round(($tx_diff * 8) / ($time_diff * 1000000), 2);
+                $response['upload_speed'] = round(($rx_diff * 8) / ($time_diff * 1000000), 2);
             }
         }
 
@@ -2828,7 +2828,6 @@ if (isset($_GET['api']) && $_GET['api'] === 'clear_log') {
             <span id="data-usage">0.0</span> 
             <span class="text-xl">GB</span>
           </div>
-          <div class="text-sm text-gray-500 mt-2">Bulan ini</div>
         </div>
       </div>
 
