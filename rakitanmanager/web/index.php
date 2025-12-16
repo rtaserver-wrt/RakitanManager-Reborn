@@ -1,6 +1,6 @@
 <?php
-$currentVersion = '0.00.04';
-$updatelast = '08-12-2025';
+$currentVersion = '0.00.05';
+$updatelast = '16-12-2025';
 
 // Start session for network stats
 session_start();
