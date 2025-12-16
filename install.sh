@@ -304,6 +304,12 @@ install_rakitanmanager() {
             log "Backed up existing modems.json configuration" "INFO"
         fi
 
+        # Backup existing config file
+        if [ -f "$CONFIG_FILE" ]; then
+            cp -f "$CONFIG_FILE" "$TEMP_DIR/rakitanmanager/config/rakitanmanager" 2>/dev/null
+            log "Backed up existing configuration file" "INFO"
+        fi
+
         # Copy config file
         if [ -f "$CONFIG_FILE" ]; then
             rm -f "$CONFIG_FILE" 2>/dev/null
@@ -353,6 +359,13 @@ install_rakitanmanager() {
             rm -f "/usr/share/rakitanmanager/modems.json" 2>/dev/null
             cp -f "$TEMP_DIR/rakitanmanager/config/modems.json" "/usr/share/rakitanmanager/modems.json" 2>/dev/null
             log "Restored modems.json configuration" "INFO"
+        fi
+
+        # Restore config file if backed up
+        if [ -f "$TEMP_DIR/rakitanmanager/config/rakitanmanager" ]; then
+            rm -f "$CONFIG_FILE" 2>/dev/null
+            cp -f "$TEMP_DIR/rakitanmanager/config/rakitanmanager" "$CONFIG_FILE" 2>/dev/null
+            log "Restored configuration file" "INFO"
         fi
 
         create_minimal_installation
