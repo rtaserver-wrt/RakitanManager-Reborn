@@ -1,5 +1,8 @@
 # What's New!
 
+**Changelog** (v0.00.05 16-12-2025):
+- Fix Double Run
+
 **Changelog** (v0.00.04 08-12-2025):
 - Fix Upload Download 
 - Fix Init Script

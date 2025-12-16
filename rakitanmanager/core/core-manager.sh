@@ -20,6 +20,7 @@ DEVICE_MODEL=$(echo "$DEVICE_INFO" | jq -r '.model // "unknown"')
 DEVICE_BOARD=$(echo "$DEVICE_INFO" | jq -r '.board_name // "unknown"')
 
 RAKITANMANAGERDIR="/usr/share/rakitanmanager"
+PIDFILE="/var/run/rakitanmanager.pid"
 
 # Parsing konfigurasi dan menjalankan fungsi-fungsi yang diperlukan
 json_file="/usr/share/rakitanmanager/modems.json"
@@ -138,7 +139,6 @@ perform_ping() {
     retry_count=${retry_count:-3}
 
     local attempt=1
-    local new_ip=""
 
     while true; do
         # Log rotation
@@ -270,11 +270,12 @@ perform_ping() {
                         ;;
                     *)
                         log "[$device_name - $name] Device type tidak dikenali"
+                        attempt=1
                         ;;
                 esac
+            else
+                attempt=$((attempt + 1))
             fi
-            
-            attempt=$((attempt + 1))
         else
             attempt=1
         fi
@@ -419,6 +420,9 @@ handle_customscript() {
 }
 
 main() {
+    # Simpan PID utama
+    echo $$ > "$PIDFILE"
+    
     log "Starting RakitanManager..."
     parse_config
     if [ ${#modems[@]} -eq 0 ]; then
@@ -429,32 +433,60 @@ main() {
     for modem_data in "${modems[@]}"; do
         perform_ping "$modem_data" &
     done
+    
+    # Wait untuk semua background processes
+    wait
 }
 
 rakitanmanager_stop() {
-    local pids
-    pids=$(pgrep -f "core-manager.sh" 2>/dev/null)
+    log "Stopping RakitanManager..."
     
-    if [ -n "$pids" ]; then
-        kill $pids 2>/dev/null
-        sleep 2
-        # Force kill jika masih berjalan
-        if pidof core-manager.sh >/dev/null; then
-            /usr/share/rakitanmanager/core-manager.sh -k 2>/dev/null || {
-            killall -9 core-manager.sh 2>/dev/null
-        }
+    # Baca PID dari file
+    if [ -f "$PIDFILE" ]; then
+        local main_pid=$(cat "$PIDFILE")
+        
+        # Kill child processes terlebih dahulu
+        local child_pids=$(pgrep -P "$main_pid" 2>/dev/null)
+        if [ -n "$child_pids" ]; then
+            log "Stopping child processes: $child_pids"
+            kill -TERM $child_pids 2>/dev/null
+            sleep 2
+            # Force kill jika masih berjalan
+            kill -9 $child_pids 2>/dev/null
         fi
-        log "RakitanManager Berhasil Dihentikan."
+        
+        # Kill main process
+        if kill -0 "$main_pid" 2>/dev/null; then
+            log "Stopping main process: $main_pid"
+            kill -TERM "$main_pid" 2>/dev/null
+            sleep 2
+            # Force kill jika masih berjalan
+            if kill -0 "$main_pid" 2>/dev/null; then
+                kill -9 "$main_pid" 2>/dev/null
+            fi
+        fi
+        
+        rm -f "$PIDFILE"
+        log "RakitanManager berhasil dihentikan."
     else
-        log "RakitanManager is not running."
-    fi
-    
-    # Kill child processes juga
-    pids=$(pgrep -P $$ 2>/dev/null)
-    if [ -n "$pids" ]; then
-        kill $pids 2>/dev/null
+        log "PID file not found. Checking for running processes..."
+        
+        # Cari proses yang masih berjalan
+        local pids=$(pgrep -f "$RAKITANMANAGERDIR/core-manager.sh" | grep -v "$$")
+        if [ -n "$pids" ]; then
+            log "Found running processes: $pids"
+            kill -TERM $pids 2>/dev/null
+            sleep 2
+            kill -9 $pids 2>/dev/null
+            log "RakitanManager berhasil dihentikan."
+        else
+            log "RakitanManager is not running."
+        fi
     fi
 }
+
+# Trap untuk cleanup saat script dihentikan
+trap 'rakitanmanager_stop; exit' SIGTERM SIGINT
 
 while getopts ":skrpcvh" rakitanmanager; do
     case $rakitanmanager in
@@ -463,6 +495,13 @@ while getopts ":skrpcvh" rakitanmanager; do
             ;;
         k)
             rakitanmanager_stop
+            exit 0
+            ;;
+        *)
+            echo "Usage: $0 {-s|-k}"
+            echo "  -s  Start RakitanManager"
+            echo "  -k  Stop RakitanManager"
+            exit 1
             ;;
     esac
 done

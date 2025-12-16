@@ -1113,10 +1113,10 @@ if (isset($_GET['api']) && $_GET['api'] === 'toggle_rakitanmanager') {
 
     // Start or stop the service
     if ($new_status == 1) {
-        shell_exec("/usr/share/rakitanmanager/core-manager.sh -s");
+        shell_exec("/etc/init.d/rakitanmanager start");
         $message = 'Rakitan Manager STARTED successfully';
     } else {
-        shell_exec("/usr/share/rakitanmanager/core-manager.sh -k");
+        shell_exec("/etc/init.d/rakitanmanager stop");
         $message = 'Rakitan Manager STOPPED successfully';
     }
 
